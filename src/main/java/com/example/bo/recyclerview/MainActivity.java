@@ -1,56 +1,63 @@
 package com.example.bo.recyclerview;
 
+import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.bumptech.glide.Glide;
+import com.example.bo.recyclerview.model.Place;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    private ArrayList<String> mNames = new ArrayList<>();
-    private ArrayList<String> mImageUrls = new ArrayList<>();
+    private Context context;
+    FirebaseDatabase mDatabase;
+    private DatabaseReference myref;
+
+    FirebaseRecyclerOptions options;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mDatabase = FirebaseDatabase.getInstance();
+        context = getApplicationContext();
+        myref = mDatabase.getReference().child("Places");
+
+        options = new FirebaseRecyclerOptions.Builder<Place>().setQuery(myref, Place.class).build();
+        FirebaseRecyclerAdapter adapter = new FirebaseRecyclerAdapter<Place, ViewHolder>(options) {
 
 
-        mImageUrls.add("https://c1.staticflickr.com/5/4636/25316407448_de5fbf183d_o.jpg");
-        mNames.add("Havasu Falls");
+            @NonNull
+            @Override
+            public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
+                return  new ViewHolder(view);
+            }
 
-        mImageUrls.add("https://i.redd.it/tpsnoz5bzo501.jpg");
-        mNames.add("Trondheim");
-
-        mImageUrls.add("https://i.redd.it/qn7f9oqu7o501.jpg");
-        mNames.add("Portugal");
-
-        mImageUrls.add("https://i.redd.it/j6myfqglup501.jpg");
-        mNames.add("Rocky Mountain National Park");
-
-
-        mImageUrls.add("https://i.redd.it/0h2gm1ix6p501.jpg");
-        mNames.add("Mahahual");
-
-        mImageUrls.add("https://i.redd.it/k98uzl68eh501.jpg");
-        mNames.add("Frozen Lake");
-
-
-        mImageUrls.add("https://i.redd.it/glin0nwndo501.jpg");
-        mNames.add("White Sands Desert");
-
-        mImageUrls.add("https://i.redd.it/obx4zydshg601.jpg");
-        mNames.add("Austrailia");
-
-        mImageUrls.add("https://i.imgur.com/ZcLLrkY.jpg");
-        mNames.add("Washington");
+            @Override
+            protected void onBindViewHolder(ViewHolder holder, int position, Place model) {
+                holder.name.setText(model.getName());
+                Glide.with(context).load(model.getImage()).into(holder.imageView);
+            }
+        };
 
 
         RecyclerView recyclerView = findViewById(R.id.recycler);
-        RecyclerViewAdapter adapter = new RecyclerViewAdapter(mImageUrls,mNames,this );
-        Log.d("Inite adapter", "Calling");
+        adapter.startListening();
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
